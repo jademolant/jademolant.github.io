@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora de dosis</title>
+<meta name="theme-color" content="#5b21b6">
+<style>
+  /* Layout: cabecera violeta con tarjetas apiladas que suben sobre ella; una columna de 560px como máximo */
+  :root {
+    --v-400: #a78bfa; --v-500: #8b5cf6; --v-600: #7c3aed;
+    --bg: #f5f3ff; --card: #ffffff; --text: #1f1235; --muted: #6b5b8a;
+    --line: #ddd6fe; --input-bg: #fffbea; --input-line: #f5d76e;
+    --accent: #6d28d9; --result-bg: #ede9fe;
+    --head-1: #5b21b6; --head-2: #7c3aed; --head-3: #8b5cf6; --on-head: #ffffff;
+    --scrim: rgba(46, 16, 101, 0.55); --danger: #e11d48; --ok: #22c55e;
+    --shadow: 0 6px 24px rgba(76, 29, 149, 0.10);
+    --show-sun: none; --show-moon: block;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #140a26; --card: #1e1236; --text: #f3eeff; --muted: #b8a6dc;
+      --line: #3b2768; --input-bg: #2a1b4a; --input-line: #a78bfa;
+      --accent: #c4b5fd; --result-bg: #2a1b4a;
+      --head-1: #3b0f80; --head-2: #5b21b6; --head-3: #6d28d9;
+      --shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+      --show-sun: block; --show-moon: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #140a26; --card: #1e1236; --text: #f3eeff; --muted: #b8a6dc;
+    --line: #3b2768; --input-bg: #2a1b4a; --input-line: #a78bfa;
+    --accent: #c4b5fd; --result-bg: #2a1b4a;
+    --head-1: #3b0f80; --head-2: #5b21b6; --head-3: #6d28d9;
+    --shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    --show-sun: block; --show-moon: none;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    transition: background .25s, color .25s;
+  }
+
+  .toggle {
+    position: absolute;
+    width: 1px; height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ---------- Cabecera ---------- */
+  header {
+    background: linear-gradient(135deg, var(--head-1), var(--head-2) 60%, var(--head-3));
+    color: var(--on-head);
+    padding-block: 20px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .header-inner {
+    max-width: 560px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  header h1 { margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; text-wrap: balance; }
+  header p { margin: 4px 0 0; font-size: 0.9rem; opacity: 0.85; }
+
+  .header-actions { display: flex; gap: 10px; flex-shrink: 0; }
+  .icon-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.15);
+    color: var(--on-head);
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    user-select: none;
+    transition: background .2s, transform .1s;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.28); }
+  .icon-btn:active { transform: scale(0.94); }
+  .icon-btn:focus-visible { outline: 3px solid var(--on-head); outline-offset: 2px; }
+  .icon-btn svg { width: 22px; height: 22px; }
+  .i-sun  { display: var(--show-sun); }
+  .i-moon { display: var(--show-moon); }
+
+  /* ---------- Layout ---------- */
+  main {
+    max-width: calc(560px + 32px);
+    margin: -36px auto 0;
+    padding-block: 0 32px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid;
+    gap: 16px;
+    position: relative;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+    border: 1px solid var(--line);
+    min-width: 0;
+  }
+  .card h2 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--accent);
+  }
+  .badge {
+    display: inline-grid;
+    place-items: center;
+    width: 28px; height: 28px;
+    border-radius: 9px;
+    background: var(--v-600);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  /* ---------- Configuración ---------- */
+  .config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .config-grid > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+  .config-grid label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .cfg-wrap { position: relative; }
+  .cfg-wrap .unit {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .config-grid input {
+    width: 100%;
+    padding: 12px 60px 12px 12px;
+    font-size: 1.05rem;
+    border-radius: 12px;
+    border: 1.5px solid var(--line);
+    background: var(--result-bg);
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Conversores ---------- */
+  .field-label {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .input-wrap { position: relative; }
+  .input-wrap input {
+    width: 100%;
+    padding: 16px 70px 16px 16px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    border-radius: 14px;
+    border: 2px solid var(--input-line);
+    background: var(--input-bg);
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .input-wrap .unit {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 600;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--v-500) !important;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25);
+  }
+  input.invalid { border-color: var(--danger) !important; }
+
+  .results {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .result {
+    background: var(--result-bg);
+    border-radius: 14px;
+    padding: 12px 14px;
+    min-width: 0;
+  }
+  .result .value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+    transition: transform .15s;
+  }
+  .result .value.bump { transform: scale(1.06); }
+  .result .label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 600;
+  }
+
+  .save-note {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin: 4px 0 0;
+  }
+  .save-note .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--v-400);
+    margin-right: 6px;
+    vertical-align: middle;
+    transition: background .3s;
+  }
+  .save-note .dot.flash { background: var(--ok); }
+
+  /* ---------- Ventana de ayuda ---------- */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  #helpToggle:checked ~ .modal { display: flex; }
+  .backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--scrim);
+    cursor: pointer;
+  }
+  .sheet {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    max-height: 88vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--card);
+    color: var(--text);
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -10px 40px rgba(46, 16, 101, 0.35);
+    animation: slideUp .25s ease-out;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  @media (min-width: 600px) {
+    .modal { align-items: center; padding: 24px; }
+    .sheet { border-radius: 22px; }
+  }
+  .modal-head {
+    position: sticky;
+    top: 0;
+    background: var(--card);
+    padding: 18px max(18px, env(safe-area-inset-right, 0px)) 12px max(18px, env(safe-area-inset-left, 0px));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+  }
+  .modal-head h2 { margin: 0; font-size: 1.15rem; color: var(--accent); }
+  .close-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--result-bg);
+    color: var(--text);
+    font-size: 1.3rem;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .close-btn:focus-visible { outline: 3px solid var(--v-500); outline-offset: 2px; }
+  .modal-body {
+    padding-block: 8px calc(22px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(18px, env(safe-area-inset-left, 0px));
+    padding-right: max(18px, env(safe-area-inset-right, 0px));
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+  .modal-body h3 { font-size: 0.95rem; margin: 18px 0 4px; color: var(--accent); }
+  .modal-body p { margin: 4px 0; }
+  .modal-body code {
+    background: var(--result-bg);
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-size: 0.88em;
+  }
+  .swatch {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    vertical-align: -2px;
+    margin-right: 4px;
+    border: 1.5px solid var(--input-line);
+    background: var(--input-bg);
+  }
+  .warning {
+    margin-top: 18px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--result-bg);
+    border-left: 4px solid var(--v-500);
+    font-size: 0.88rem;
+  }
+  .reset-btn {
+    display: block;
+    margin-top: 18px;
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1.5px solid var(--v-400);
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  .reset-btn:active { background: var(--result-bg); }
+  .reset-btn:focus-visible { outline: 3px solid var(--v-500); outline-offset: 2px; }
+
+  .nojs-note {
+    background: var(--card); border: 1.5px solid var(--v-400); border-radius: 14px;
+    padding: 12px 14px; font-size: 0.88rem; line-height: 1.45;
+  }
+  html.js .nojs-note { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<input type="checkbox" id="helpToggle" class="toggle" aria-hidden="true" tabindex="-1">
+
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>Calculadora de dosis</h1>
+      <p>mg · mL · rayitas</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="icon-btn" id="themeBtn" aria-label="Cambiar entre modo claro y oscuro">
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+      </button>
+      <label for="helpToggle" class="icon-btn" role="button" tabindex="0" aria-label="Abrir ayuda">?</label>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="nojs-note">
+    <strong>Este visor no ejecuta JavaScript</strong>, así que las casillas no recalculan aquí. Ábrela en Chrome u otro navegador para que funcione del todo.
+  </div>
+  <section class="card">
+    <h2><span class="badge">⚙</span> Tu vial y tu jeringa</h2>
+    <div class="config-grid">
+      <div>
+        <label for="conc">Concentración</label>
+        <div class="cfg-wrap">
+          <input id="conc" type="text" inputmode="decimal" autocomplete="off" value="40">
+          <span class="unit">mg/mL</span>
+        </div>
+      </div>
+      <div>
+        <label for="tick">Valor de 1 rayita</label>
+        <div class="cfg-wrap">
+          <input id="tick" type="text" inputmode="decimal" autocomplete="off" value="0,01">
+          <span class="unit">mL</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">1</span> Convertir miligramos</h2>
+    <label class="field-label" for="mg">Escribe tus mg</label>
+    <div class="input-wrap">
+      <input id="mg" type="text" inputmode="decimal" autocomplete="off" value="2,8">
+      <span class="unit">mg</span>
+    </div>
+    <div class="results">
+      <div class="result"><div class="value" id="mg_ml">0,07</div><div class="label">mL</div></div>
+      <div class="result"><div class="value" id="mg_ticks">7</div><div class="label">rayitas</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">2</span> Convertir mililitros</h2>
+    <label class="field-label" for="ml">Escribe tus mL</label>
+    <div class="input-wrap">
+      <input id="ml" type="text" inputmode="decimal" autocomplete="off" value="0,07">
+      <span class="unit">mL</span>
+    </div>
+    <div class="results">
+      <div class="result"><div class="value" id="ml_mg">2,8</div><div class="label">mg</div></div>
+      <div class="result"><div class="value" id="ml_ticks">7</div><div class="label">rayitas</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">3</span> Convertir rayitas</h2>
+    <label class="field-label" for="ticks">Escribe tus rayitas</label>
+    <div class="input-wrap">
+      <input id="ticks" type="text" inputmode="decimal" autocomplete="off" value="7">
+      <span class="unit">ray.</span>
+    </div>
+    <div class="results">
+      <div class="result"><div class="value" id="ticks_ml">0,07</div><div class="label">mL</div></div>
+      <div class="result"><div class="value" id="ticks_mg">2,8</div><div class="label">mg</div></div>
+    </div>
+  </section>
+
+  <p class="save-note"><span class="dot" id="saveDot"></span><span id="saveText">Tus datos se guardan solo en este navegador</span></p>
+</main>
+
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <label for="helpToggle" class="backdrop" aria-hidden="true"></label>
+  <div class="sheet">
+    <div class="modal-head">
+      <h2 id="helpTitle">Cómo funciona</h2>
+      <label for="helpToggle" class="close-btn" role="button" tabindex="0" aria-label="Cerrar ayuda">×</label>
+    </div>
+    <div class="modal-body">
+      <h3>⚙ Tu vial y tu jeringa</h3>
+      <p><strong>Concentración:</strong> Los mg que hay en cada mL de tu vial. Si cambias de vial (por ejemplo a 50 o 20 mg/mL), cámbialo aquí y todo se recalcula.</p>
+      <p><strong>Valor de 1 rayita:</strong> El volumen de cada rayita. En una jeringa de insulina estándar U-100 es <code>0,01</code> mL (100 rayitas = 1 mL).</p>
+
+      <h3>1 · Convertir miligramos</h3>
+      <p>Para cuando una pauta te habla de dosis en peso. Calcula los mL (<code>mg ÷ concentración</code>) y las rayitas (<code>mL ÷ valor de rayita</code>).</p>
+
+      <h3>2 · Convertir mililitros</h3>
+      <p>Útil si lees estudios o protocolos que miden por volumen. Calcula los mg (<code>mL × concentración</code>) y las rayitas (<code>mL ÷ valor de rayita</code>).</p>
+
+      <h3>3 · Convertir rayitas</h3>
+      <p>La más práctica para el día a día o cuando hablas de dosis en "rayitas". Calcula los mL (<code>rayitas × valor de rayita</code>) y los mg (<code>mL × concentración</code>).</p>
+
+      <h3>Qué puedes tocar</h3>
+      <p>Las tres casillas grandes son las tuyas: Escribe y el resultado cambia al momento. Puedes usar coma o punto para los decimales.</p>
+      <p>Todo lo que escribes se guarda en este navegador, así que al volver a abrir la página lo encontrarás tal cual.</p>
+
+      <div class="warning">Utilidad creada por Jade. Noviembre 2026</div>
+
+      <button class="reset-btn" id="resetBtn" type="button">Restablecer valores</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  document.documentElement.classList.add("js");
+
+  const DEFAULTS = { conc: "40", tick: "0,01", mg: "2,8", ml: "0,07", ticks: "7" };
+  const FIELDS = Object.keys(DEFAULTS);
+  const PREFIX = "calcdosis_";
+  const ONE_YEAR = 60 * 60 * 24 * 365;
+
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- Almacenamiento: cookies, con respaldo en localStorage ----------
+  function cookiesWork() {
+    try {
+      document.cookie = PREFIX + "test=1; max-age=60; path=/; SameSite=Lax";
+      const ok = document.cookie.indexOf(PREFIX + "test=1") !== -1;
+      document.cookie = PREFIX + "test=; max-age=0; path=/";
+      return ok;
+    } catch (e) { return false; }
+  }
+  const useCookies = cookiesWork();
+
+  function save(key, value) {
+    try {
+      if (useCookies) {
+        const secure = location.protocol === "https:" ? "; Secure" : "";
+        document.cookie = PREFIX + key + "=" + encodeURIComponent(value) +
+          "; max-age=" + ONE_YEAR + "; path=/; SameSite=Lax" + secure;
+      }
+    } catch (e) {}
+    // Copia también en localStorage, por si el navegador borra o bloquea cookies
+    try { localStorage.setItem(PREFIX + key, value); } catch (e) {}
+  }
+
+  function load(key) {
+    try {
+      if (useCookies) {
+        const match = document.cookie.split("; ").find((c) => c.startsWith(PREFIX + key + "="));
+        if (match) return decodeURIComponent(match.split("=").slice(1).join("="));
+      }
+    } catch (e) {}
+    try { return localStorage.getItem(PREFIX + key); } catch (e) { return null; }
+  }
+
+  // ---------- Números ----------
+  function parse(str) {
+    if (str == null) return NaN;
+    const clean = String(str).trim().replace(/\s/g, "").replace(",", ".");
+    if (clean === "" || !/^-?\d*\.?\d*$/.test(clean)) return NaN;
+    return parseFloat(clean);
+  }
+
+  const fmt = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 3 });
+  function show(id, n) {
+    const el = $(id);
+    const text = Number.isFinite(n) ? fmt.format(Math.round(n * 1e6) / 1e6) : "—";
+    if (el.textContent !== text) {
+      el.textContent = text;
+      el.classList.add("bump");
+      setTimeout(() => el.classList.remove("bump"), 150);
+    }
+  }
+
+  // ---------- Cálculos (las mismas fórmulas que la hoja) ----------
+  function calc() {
+    const conc  = parse($("conc").value);
+    const tick  = parse($("tick").value);
+    const mg    = parse($("mg").value);
+    const ml    = parse($("ml").value);
+    const ticks = parse($("ticks").value);
+
+    const okConc = conc > 0;
+    const okTick = tick > 0;
+
+    const mg_ml = okConc ? mg / conc : NaN;
+    show("mg_ml", mg_ml);
+    show("mg_ticks", okTick ? mg_ml / tick : NaN);
+
+    show("ml_mg", ml * conc);
+    show("ml_ticks", okTick ? ml / tick : NaN);
+
+    const ticks_ml = ticks * tick;
+    show("ticks_ml", ticks_ml);
+    show("ticks_mg", ticks_ml * conc);
+  }
+
+  // ---------- Indicador de guardado ----------
+  let flashTimer;
+  function flashSaved() {
+    $("saveDot").classList.add("flash");
+    $("saveText").textContent = "Guardado";
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => {
+      $("saveDot").classList.remove("flash");
+      $("saveText").textContent = "Tus datos se guardan solo en este navegador";
+    }, 900);
+  }
+
+  // ---------- Casillas ----------
+  FIELDS.forEach((key) => {
+    const input = $(key);
+    const stored = load(key);
+    // Concentración y rayita: si están vacías vuelven a su valor por defecto.
+    // Las tres casillas de abajo solo usan el ejemplo la primera vez.
+    const isConfig = key === "conc" || key === "tick";
+    if (stored === null) input.value = DEFAULTS[key];
+    else if (isConfig && stored.trim() === "") input.value = DEFAULTS[key];
+    else input.value = stored;
+
+    input.addEventListener("input", () => {
+      const v = input.value;
+      input.classList.toggle("invalid", v.trim() !== "" && isNaN(parse(v)));
+      save(key, v);
+      calc();
+      flashSaved();
+    });
+  });
+  calc();
+
+  // ---------- Modo claro / oscuro ----------
+  const root = document.documentElement;
+  const mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function isDark() {
+    const t = root.getAttribute("data-theme");
+    if (t === "dark") return true;
+    if (t === "light") return false;
+    return !!(mq && mq.matches);
+  }
+  const storedTheme = load("theme");
+  if (storedTheme === "dark" || storedTheme === "light") root.setAttribute("data-theme", storedTheme);
+
+  $("themeBtn").addEventListener("click", () => {
+    const next = isDark() ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    save("theme", next);
+  });
+
+  // ---------- Ayuda ----------
+  const helpToggle = $("helpToggle");
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") helpToggle.checked = false;
+  });
+  document.querySelectorAll('label[role="button"]').forEach((lbl) => {
+    lbl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); lbl.click(); }
+    });
+  });
+
+  $("resetBtn").addEventListener("click", () => {
+    // Configuración a sus valores por defecto; las tres casillas de abajo, vacías
+    FIELDS.forEach((key) => {
+      const value = (key === "conc" || key === "tick") ? DEFAULTS[key] : "";
+      $(key).value = value;
+      $(key).classList.remove("invalid");
+      save(key, value);
+    });
+    calc();
+    helpToggle.checked = false;
+    flashSaved();
+  });
+})();
+</script>
+</body>
+</html>
