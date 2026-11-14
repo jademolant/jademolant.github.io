@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Calculadora de dosis</title>
 <meta name="theme-color" content="#5b21b6">
+<meta name="description" content="Conversor de mg, mL y rayitas de jeringa U-100 según la concentración del vial.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dosis">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
   /* Layout: cabecera violeta con tarjetas apiladas que suben sobre ella; una columna de 560px como máximo */
   :root {
@@ -61,7 +70,7 @@
   header {
     background: linear-gradient(135deg, var(--head-1), var(--head-2) 60%, var(--head-3));
     color: var(--on-head);
-    padding-block: 20px 56px;
+    padding-block: calc(20px + env(safe-area-inset-top, 0px)) 56px;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
   }
@@ -651,6 +660,11 @@
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); lbl.click(); }
     });
   });
+
+  // ---------- App instalable ----------
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
 
   $("resetBtn").addEventListener("click", () => {
     // Configuración a sus valores por defecto; las tres casillas de abajo, vacías

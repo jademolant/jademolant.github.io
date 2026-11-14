@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#f5f3ff"/>
+  <g transform="rotate(-45 256 256)" stroke-linejoin="round">
+    <!-- Aguja -->
+    <line x1="392" y1="256" x2="450" y2="256" stroke="#6d28d9" stroke-width="7" stroke-linecap="round"/>
+    <!-- Cono de la aguja -->
+    <path d="M356 232 L394 244 L394 268 L356 280 Z" fill="#7c3aed"/>
+    <!-- Émbolo -->
+    <rect x="80" y="245" width="90" height="22" rx="4" fill="#6d28d9"/>
+    <rect x="62" y="196" width="22" height="120" rx="8" fill="#5b21b6"/>
+    <!-- Cuerpo -->
+    <rect x="152" y="206" width="210" height="100" rx="16" fill="#ede9fe" stroke="#7c3aed" stroke-width="12"/>
+    <!-- Líquido -->
+    <rect x="252" y="218" width="98" height="76" rx="6" fill="#a78bfa"/>
+    <!-- Tapón del émbolo -->
+    <rect x="236" y="218" width="16" height="76" rx="3" fill="#5b21b6"/>
+    <!-- Aletas -->
+    <rect x="140" y="178" width="20" height="156" rx="8" fill="#5b21b6"/>
+    <!-- Rayitas -->
+    <g stroke="#7c3aed" stroke-width="6" stroke-linecap="round">
+      <line x1="196" y1="212" x2="196" y2="246"/>
+      <line x1="224" y1="212" x2="224" y2="234"/>
+      <line x1="280" y1="212" x2="280" y2="246"/>
+      <line x1="308" y1="212" x2="308" y2="234"/>
+      <line x1="336" y1="212" x2="336" y2="246"/>
+    </g>
+  </g>
+</svg>
