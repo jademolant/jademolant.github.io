@@ -442,12 +442,12 @@
     <h2><span class="badge">1</span> Convertir miligramos</h2>
     <label class="field-label" for="mg">Escribe tus mg</label>
     <div class="input-wrap">
-      <input id="mg" type="text" inputmode="decimal" autocomplete="off" value="2,8">
+      <input id="mg" type="text" inputmode="decimal" autocomplete="off" value="">
       <span class="unit">mg</span>
     </div>
     <div class="results">
-      <div class="result"><div class="value" id="mg_ml">0,07</div><div class="label">mL</div></div>
-      <div class="result"><div class="value" id="mg_ticks">7</div><div class="label">rayitas</div></div>
+      <div class="result"><div class="value" id="mg_ml">—</div><div class="label">mL</div></div>
+      <div class="result"><div class="value" id="mg_ticks">—</div><div class="label">rayitas</div></div>
     </div>
   </section>
 
@@ -455,12 +455,12 @@
     <h2><span class="badge">2</span> Convertir mililitros</h2>
     <label class="field-label" for="ml">Escribe tus mL</label>
     <div class="input-wrap">
-      <input id="ml" type="text" inputmode="decimal" autocomplete="off" value="0,07">
+      <input id="ml" type="text" inputmode="decimal" autocomplete="off" value="">
       <span class="unit">mL</span>
     </div>
     <div class="results">
-      <div class="result"><div class="value" id="ml_mg">2,8</div><div class="label">mg</div></div>
-      <div class="result"><div class="value" id="ml_ticks">7</div><div class="label">rayitas</div></div>
+      <div class="result"><div class="value" id="ml_mg">—</div><div class="label">mg</div></div>
+      <div class="result"><div class="value" id="ml_ticks">—</div><div class="label">rayitas</div></div>
     </div>
   </section>
 
@@ -468,12 +468,12 @@
     <h2><span class="badge">3</span> Convertir rayitas</h2>
     <label class="field-label" for="ticks">Escribe tus rayitas</label>
     <div class="input-wrap">
-      <input id="ticks" type="text" inputmode="decimal" autocomplete="off" value="7">
+      <input id="ticks" type="text" inputmode="decimal" autocomplete="off" value="">
       <span class="unit">ray.</span>
     </div>
     <div class="results">
-      <div class="result"><div class="value" id="ticks_ml">0,07</div><div class="label">mL</div></div>
-      <div class="result"><div class="value" id="ticks_mg">2,8</div><div class="label">mg</div></div>
+      <div class="result"><div class="value" id="ticks_ml">—</div><div class="label">mL</div></div>
+      <div class="result"><div class="value" id="ticks_mg">—</div><div class="label">mg</div></div>
     </div>
   </section>
 
@@ -517,7 +517,7 @@
   "use strict";
   document.documentElement.classList.add("js");
 
-  const DEFAULTS = { conc: "40", tick: "0,01", mg: "2,8", ml: "0,07", ticks: "7" };
+  const DEFAULTS = { conc: "40", tick: "0,01", mg: "", ml: "", ticks: "" };
   const FIELDS = Object.keys(DEFAULTS);
   const PREFIX = "calcdosis_";
   const ONE_YEAR = 60 * 60 * 24 * 365;
@@ -616,7 +616,7 @@
     const input = $(key);
     const stored = load(key);
     // Concentración y rayita: si están vacías vuelven a su valor por defecto.
-    // Las tres casillas de abajo solo usan el ejemplo la primera vez.
+    // Las tres casillas de abajo empiezan vacías si no hay nada guardado.
     const isConfig = key === "conc" || key === "tick";
     if (stored === null) input.value = DEFAULTS[key];
     else if (isConfig && stored.trim() === "") input.value = DEFAULTS[key];

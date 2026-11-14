@@ -1,6 +1,6 @@
 // Service worker: permite instalar la app y usarla sin conexión.
 // Sube el número de versión cuando cambies algún archivo para forzar la actualización.
-const CACHE = "calculadora-dosis-v1";
+const CACHE = "calculadora-dosis-v2";
 const FILES = [
   "./",
   "./index.html",
